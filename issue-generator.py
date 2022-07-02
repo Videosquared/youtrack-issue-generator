@@ -9,21 +9,22 @@ import datetime
 
 def main():
     issueGenerator = IssueGenerator()
+    issueGenerator.send_get("admin/projects?fields=id,name,shortName")
 
 
 class IssueGenerator:
 
     def __init__(self):
         self.debug = False
-        self.token = 0
-        self.issues = 9
-        self.projects = 0
-        self.config_json = self.read_json("config.txt")
+        self.projects = self.get_projects()
+        self.config_json = self.read_json("config.json")
         self.issues_json = self.read_json("issues.json")
+        self.session = self.get_session()
         self.logs = []
 
     def generate(self):
-        pass
+        for issue in self.issues_json:
+            pass
 
     def check_date(self):
         pass
@@ -38,9 +39,31 @@ class IssueGenerator:
     def mail_logs(self):
         pass
 
+    def get_projects(self):
+        return None
+
+    def send_get(self, url):
+        response = self.session.get(self.config_json["youtrack-api-url"] + url)
+
+        if response.status_code == 200:
+            print(json.loads(response.content))
+
+
+    def get_session(self):
+        session = requests.Session()
+
+        base_headers = {
+            "Accept": "application/json",
+            "Authorization": "Bearer " + self.config_json["youtrack-token"],
+            "Content-Type": "application/json"
+        }
+
+        session.headers.update(base_headers)
+        return session
+
     @staticmethod
-    def read_json(file):
-        with open(file, "r") as file:
+    def read_json(json_file):
+        with open(json_file, "r") as file:
             content = file.read()
             json_data = json.loads(content)
         return json_data
