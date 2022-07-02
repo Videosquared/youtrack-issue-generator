@@ -1,0 +1,20 @@
+[
+  {
+    "date": "patch-tuesday",
+    "project": "project-name",
+    "summary": "something",
+    "description": "Some desc",
+    "custom-fields": {
+      "assignee": "Videosquared"
+    }
+  },
+  {
+    "date": "patch-tuesday",
+    "project": "project-name",
+    "summary": "something",
+    "description": "Some desc",
+    "custom-fields": {
+      "assignee": "Videosquared"
+    }
+  }
+]

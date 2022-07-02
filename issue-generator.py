@@ -1,5 +1,4 @@
 import calendar
-
 import requests
 import sys
 import json
@@ -10,23 +9,44 @@ import datetime
 
 def main():
     issueGenerator = IssueGenerator()
-    issueGenerator.find_patch_tuesday()
+
 
 class IssueGenerator:
+
     def __init__(self):
+        self.debug = False
         self.token = 0
         self.issues = 9
         self.projects = 0
+        self.config_json = self.read_json("config.txt")
+        self.issues_json = self.read_json("issues.json")
+        self.logs = []
 
-    def readJson(self):
-        with open("daily.json", "r") as file:
-            content = file.read()
-            jsonData = json.loads(content)
+    def generate(self):
+        pass
 
+    def check_date(self):
+        pass
+
+    def create_issue(self):
+        pass
+
+    def set_custom_fields(self):
+        pass
+
+    # https://realpython.com/python-send-email/
     def mail_logs(self):
         pass
 
-    def find_patch_tuesday(self):
+    @staticmethod
+    def read_json(file):
+        with open(file, "r") as file:
+            content = file.read()
+            json_data = json.loads(content)
+        return json_data
+
+    @staticmethod
+    def find_patch_tuesday():
         # Init the variable, random value
         patch_tuesday = 12
 
