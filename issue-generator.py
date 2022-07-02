@@ -31,8 +31,7 @@ class IssueGenerator:
         patch_tuesday = 12
 
         # Get the calendar for current month and year
-        # month_cal = calendar.monthcalendar(datetime.date.today().year, datetime.date.today().month)
-        month_cal = calendar.monthcalendar(2022, 5)
+        month_cal = calendar.monthcalendar(datetime.date.today().year, datetime.date.today().month)
 
         # For weeks 2 and 3, we check in order if the patch tuesday is
         for i in [1, 2]:
