@@ -1,0 +1,7 @@
+{
+  "youtrack-token": "very-secret-token",
+  "smtp-pw": "very-secret-password",
+  "smtp-username": "very-secret-username",
+  "smtp-sender-email": "very-secret-email",
+  "smtp-receiver-email": "very-secret-email",
+}
