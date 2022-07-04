@@ -8,8 +8,8 @@ import datetime
 
 
 def main():
-    issueGenerator = IssueGenerator()
-    issueGenerator.send_get("admin/projects?fields=id,name,shortName")
+    issue_generator = IssueGenerator()
+    issue_generator.send_get("admin/projects?fields=id,name,shortName")
 
 
 class IssueGenerator:
@@ -24,10 +24,9 @@ class IssueGenerator:
 
     def generate(self):
         for issue in self.issues_json:
-            pass
+            if issue["project"] != "TEMPLATE" and self.check_date(issue):
+                pass
 
-    def check_date(self):
-        pass
 
     def create_issue(self):
         pass
@@ -39,15 +38,14 @@ class IssueGenerator:
     def mail_logs(self):
         pass
 
-    def get_projects(self):
-        return None
-
     def send_get(self, url):
         response = self.session.get(self.config_json["youtrack-api-url"] + url)
 
         if response.status_code == 200:
-            print(json.loads(response.content))
-
+            return json.loads(response.content)
+        else:
+            # Log shit
+            return 1
 
     def get_session(self):
         session = requests.Session()
@@ -60,6 +58,37 @@ class IssueGenerator:
 
         session.headers.update(base_headers)
         return session
+
+    def get_projects(self):
+        json_response = self.send_get("admin/projects?fields=id,name,shortName")
+
+        if json_response == 1:
+            self.mail_logs()
+            print("ERROR: Unable to retrieve list of projects.")
+            exit(1)
+
+        projects = {}
+        for project in json_response:
+            projects[project["shortName"]] = project["id"]
+
+        return projects
+
+    @staticmethod
+    def check_date(issue):
+        patch_tuesday = IssueGenerator.find_patch_tuesday()
+        today_day = datetime.date.today().day
+
+        if issue["date"] == "patch-tuesday":
+            if patch_tuesday == today_day:
+                return True
+            else:
+                return False
+        elif issue["date"] == "saturday-after-patch-tuesday":
+            # Saturday After patch tuesday
+            if patch_tuesday + 4 == today_day:
+                return True
+            else:
+                return False
 
     @staticmethod
     def read_json(json_file):
@@ -83,6 +112,7 @@ class IssueGenerator:
                 patch_tuesday = week[calendar.TUESDAY]
                 break
         print(patch_tuesday)
+        return patch_tuesday
 
 
 # https://realpython.com/python-send-email/

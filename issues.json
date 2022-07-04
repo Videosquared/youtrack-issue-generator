@@ -1,7 +1,7 @@
 [
   {
     "date": "patch-tuesday",
-    "project": "project-name",
+    "project": "TEMPLATE",
     "summary": "something",
     "description": "Some desc",
     "custom-fields": {
@@ -9,8 +9,8 @@
     }
   },
   {
-    "date": "patch-tuesday",
-    "project": "project-name",
+    "date": "saturday-after-patch-tuesday",
+    "project": "project-short-name",
     "summary": "something",
     "description": "Some desc",
     "custom-fields": {
