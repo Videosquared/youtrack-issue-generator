@@ -5,11 +5,22 @@ import json
 import smtplib
 import ssl
 import datetime
+import re
+
+# https://www.jetbrains.com/help/youtrack/devportal/api-howto-create-issue-with-fields.html#step-by-step
+# https://www.nylas.com/blog/use-python-requests-module-rest-apis/
+# https://requests.readthedocs.io/en/latest/user/advanced/
+
+
+# https://stackoverflow.com/questions/62985961/how-to-use-requests-session-so-that-headers-are-presevred-and-reused-in-subseque
+
+# https://support.hostinger.com/en/articles/1575756-how-to-get-email-account-configuration-details-for-hostinger-email
+# https://realpython.com/python-send-email/
 
 
 def main():
     issue_generator = IssueGenerator()
-    issue_generator.send_get("admin/projects?fields=id,name,shortName")
+    issue_generator.send_get("api/admin/projects?fields=id,name,shortName")
 
 
 class IssueGenerator:
@@ -76,19 +87,37 @@ class IssueGenerator:
     @staticmethod
     def check_date(issue):
         patch_tuesday = IssueGenerator.find_patch_tuesday()
+        day_of_week = datetime.date.today().weekday() + 1
+        today = datetime.date.today()
         today_day = datetime.date.today().day
+        today_month = datetime.date.today().month
 
-        if issue["date"] == "patch-tuesday":
-            if patch_tuesday == today_day:
-                return True
-            else:
-                return False
-        elif issue["date"] == "saturday-after-patch-tuesday":
+        if issue["date"] == "daily":
+            # Daily Tickets
+            return True
+        elif issue["date"] == "weekly" and issue["day-of-week"] == day_of_week:
+            # Day of week (1 is Monday and 7 is Sunday)
+            return True
+        elif issue["date"] == "patch-tuesday" and patch_tuesday == today_day:
+            # Day of patch tuesday (second tuesday of month)
+            return True
+        elif issue["date"] == "saturday-after-patch-tuesday" and patch_tuesday + 4 == today_day:
             # Saturday After patch tuesday
-            if patch_tuesday + 4 == today_day:
-                return True
-            else:
-                return False
+            return True
+        elif type(issue["date"]) == int and today_day == issue["date"]:
+            # Create monthly tickets
+            return True
+        elif bool(re.match(r"^([0-2][0-9]|(3)[0-1])(-)(((0)[0-9])|((1)[0-2]))(-)\d{4}$", issue["date"])) and \
+                datetime.datetime.strptime(issue["date"], "%d-%m-%Y").date() == today:
+            # This will create tickets on a specific day in the year specified
+            return True
+        elif bool(re.match(r"^([0-2][0-9]|(3)[0-1])(-)(((0)[0-9])|((1)[0-2]))$", issue["date"])) and \
+                datetime.datetime.strptime(issue["date"], "%d-%m").date().day == today_day and \
+                datetime.datetime.strptime(issue["date"], "%d-%m").date().month == today_month:
+            # Create yearly tickets on the day and month specified
+            return True
+        else:
+            return False
 
     @staticmethod
     def read_json(json_file):

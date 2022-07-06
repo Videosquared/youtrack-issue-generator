@@ -1,5 +1,14 @@
 [
   {
+    "date": 3,
+    "project": "TEMPLATE",
+    "summary": "something",
+    "description": "Some desc",
+    "custom-fields": {
+      "assignee": "Videosquared"
+    }
+  },
+  {
     "date": "patch-tuesday",
     "project": "TEMPLATE",
     "summary": "something",
@@ -10,7 +19,35 @@
   },
   {
     "date": "saturday-after-patch-tuesday",
-    "project": "project-short-name",
+    "project": "TEMPLATE",
+    "summary": "something",
+    "description": "Some desc",
+    "custom-fields": {
+      "assignee": "Videosquared"
+    }
+  },
+  {
+    "date": "31-01-2020",
+    "project": "TEMPLATE",
+    "summary": "something",
+    "description": "Some desc",
+    "custom-fields": {
+      "assignee": "Videosquared"
+    }
+  },
+  {
+    "date": "31-01",
+    "project": "TEMPLATE",
+    "summary": "something",
+    "description": "Some desc",
+    "custom-fields": {
+      "assignee": "Videosquared"
+    }
+  },
+  {
+    "date": "weekly",
+    "date-week-day`": 3,
+    "project": "TEMPLATE",
     "summary": "something",
     "description": "Some desc",
     "custom-fields": {
