@@ -1,10 +1,10 @@
 # youtrack-issue-generator
-This is a python script designed to create issues on Jetbrains YouTrack. 
+This is a python script designed to create issues on Jetbrains YouTrack on a schedule.
 
 # Installation/Usage on Linux Server
 1. Clone the repo to a location of choice. 
 2. Edit `config.json` as follows.
-   1. `youtrack-token` - This is the permanent token you need to generate from YouTrack. For more information see [YouTrack's documentation](https://www.jetbrains.com/help/youtrack/devportal/Manage-Permanent-Token.html#obtain-permanent-token).
+   1. `youtrack-token` - This is the permanent token you need to generate from YouTrack. Ensure the token owner has access to the projects you wish to create an issue for. For more information see [YouTrack's documentation](https://www.jetbrains.com/help/youtrack/devportal/Manage-Permanent-Token.html#obtain-permanent-token).
    2. `youtrack-api-url` - This is the url to access your instance of YouTrack.
    Example: `https://example.myjetbrains.com/youtrack/` if using cloud instance.
    3. `smtp-username` - This is the username used for authorising with the `smtp` server used to send the notification email.
@@ -20,12 +20,13 @@ This is a python script designed to create issues on Jetbrains YouTrack.
       5. `1-31` - This will create the issue on the specified day every month. (Please note it is `int` value, see first template issue in `issues.json`.)
       6. `daily` - This will create the issue every day.
       7. `weekly` - This will create a weekly issue based on the day of the week.
-   2. `day-of-week` - This field is required when you have `date` field set to `weekly`.
+   2. `day-of-week` - (OPTIONAL) This field is REQUIRED when you have `date` field set to `weekly`.
       1. `1-7` - Set an `int` value of 1 to 7. (1 = Monday & 7 = Sunday)
-   3. `project` - This field selects the project to add the issue to. Please enter the project ID (prefix of issue IDs).
+   3. `project` - This field selects the project to add the issue to. Please enter the project ID (prefix of issue IDs). 
+   Please note, `TEMPLATE-PROJECT` is a reserved value and no issues will be generated if that is set in the `project` field. 
    4. `summary` - This field sets the summary field of the issue on YouTrack.
    5. `description` - This field sets the description field of the issue on YouTrack.
-   6. `custom-fields` - This field sets the values of custom fields you have for the project on YouTrack. This will be project specific, please see first template issue in `issues.json` to see how it is structured.
+   6. `custom-fields` - (OPTIONAL) This field sets the values of custom fields you have for the project on YouTrack. This will be project specific, please see first template issue in `issues.json` to see how it is structured.
 4. Open `/etc/crontab` and add the following:
    1. `0 6 * * * username python /path/to/issue-generator.py`
    This will ensure the script to run at 6am every day, you can update it to run at a time of your choice.

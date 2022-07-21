@@ -7,6 +7,7 @@ import ssl
 import datetime
 import re
 
+
 # https://www.jetbrains.com/help/youtrack/devportal/api-howto-create-issue-with-fields.html#step-by-step
 # https://www.nylas.com/blog/use-python-requests-module-rest-apis/
 # https://requests.readthedocs.io/en/latest/user/advanced/
@@ -31,23 +32,40 @@ class IssueGenerator:
         self.config_json = self.read_json("config.json")
         self.issues_json = self.read_json("issues.json")
         self.session = self.get_session()
-        self.logs = []
+        self.logger = Logger()
 
-    def generate(self):
+    def run(self):
         for issue in self.issues_json:
-            if issue["project"] != "TEMPLATE" and self.check_date(issue):
-                pass
+            if issue["project"] != "TEMPLATE-PROJECT" and self.check_date(issue):
+                if issue["project"] in self.projects.keys():
+                    data = self.create_issue(issue)
+                    self.send_post("/api/issues", data)
+                else:
+                    # log that the project iD is incorrect
+                    pass
 
+    def create_issue(self, issue):
+        data = {}
+        data.update({"project": {"id": self.projects.get(issue["project"])}})
+        data.update({"summary": issue["summary"]})
+        data.update({"description": issue["description"]})
 
-    def create_issue(self):
-        pass
+        if "custom-fields" in issue.keys():
+            data.update({"customFields": []})
+            custom_fields_response = self.get_custom_fields(issue["project"])
+            for field_name in issue["custom-fields"].keys():
+                for field in custom_fields_response:
+                    if field_name == field["name"]:
+                        if field_name == "Assignee":
+                            data.get("customFields").append({"name": field["name"],
+                                                             "$type": field["$type"],
+                                                             "value": {"login": issue["custom-fields"]["Assignee"]}})
+                        else:
+                            data.get("customFields").append({"name": field["name"],
+                                                             "$type": field["$type"],
+                                                             "value": {"name": issue["custom-fields"][field_name]}})
 
-    def set_custom_fields(self):
-        pass
-
-    # https://realpython.com/python-send-email/
-    def mail_logs(self):
-        pass
+        return data
 
     def send_get(self, url):
         response = self.session.get(self.config_json["youtrack-api-url"] + url)
@@ -57,6 +75,10 @@ class IssueGenerator:
         else:
             # Log shit
             return 1
+
+    def send_post(self, url, data):
+        response = self.session.post(self.config_json["youtrack-api-url"] + url, json=data)
+        # log response
 
     def get_session(self):
         session = requests.Session()
@@ -74,7 +96,7 @@ class IssueGenerator:
         json_response = self.send_get("admin/projects?fields=id,name,shortName")
 
         if json_response == 1:
-            self.mail_logs()
+            self.logger.clean_up()
             print("ERROR: Unable to retrieve list of projects.")
             exit(1)
 
@@ -83,6 +105,14 @@ class IssueGenerator:
             projects[project["shortName"]] = project["id"]
 
         return projects
+
+    def get_custom_fields(self, project):
+        url = "/api/issues?fields=idReadable,id,project%28id,name%29,summary" \
+              ",description,customFields%28name,$type,value%28name,login%29%29&query=in:{}&$top=1'".format(project)
+
+        json_response = self.send_get(url)
+
+        return json_response[0]["customFields"]
 
     @staticmethod
     def check_date(issue):
@@ -140,8 +170,42 @@ class IssueGenerator:
             if week[calendar.TUESDAY] >= 8 <= 14:
                 patch_tuesday = week[calendar.TUESDAY]
                 break
-        print(patch_tuesday)
+
         return patch_tuesday
+
+
+class Logger:
+
+    def __init__(self):
+        self.start_time = datetime.datetime.now().strftime("%H:%M:%S %d-%m-%Y")
+        self.log_file = open("latest-logs.log", "w")
+        self.log_file.truncate()
+        self.end_time = 0
+        self.issues = []
+        self.emailer = Emailer()
+
+    def set_end_time(self):
+        self.end_time = datetime.datetime.now().strftime("%H:%M:%S %d-%m-%Y")
+
+    def clean_up(self):
+        pass
+
+
+class Emailer:
+
+    def __init__(self):
+        self.config_json = self.read_json("config.json")
+
+    # https://realpython.com/python-send-email/
+    def mail_logs(self):
+        pass
+
+    @staticmethod
+    def read_json(json_file):
+        with open(json_file, "r") as file:
+            content = file.read()
+            json_data = json.loads(content)
+        return json_data
 
 
 # https://realpython.com/python-send-email/

@@ -1,57 +1,57 @@
 [
   {
     "date": 3,
-    "project": "TEMPLATE",
+    "project": "TEMPLATE-PROJECT",
     "summary": "something",
     "description": "Some desc",
     "custom-fields": {
-      "assignee": "Videosquared"
+      "Assignee": "Videosquared"
     }
   },
   {
     "date": "patch-tuesday",
-    "project": "TEMPLATE",
+    "project": "TEMPLATE-PROJECT",
     "summary": "something",
     "description": "Some desc",
     "custom-fields": {
-      "assignee": "Videosquared"
+      "Assignee": "Videosquared"
     }
   },
   {
     "date": "saturday-after-patch-tuesday",
-    "project": "TEMPLATE",
+    "project": "TEMPLATE-PROJECT",
     "summary": "something",
     "description": "Some desc",
     "custom-fields": {
-      "assignee": "Videosquared"
+      "Assignee": "Videosquared"
     }
   },
   {
     "date": "31-01-2020",
-    "project": "TEMPLATE",
+    "project": "TEMPLATE-PROJECT",
     "summary": "something",
     "description": "Some desc",
     "custom-fields": {
-      "assignee": "Videosquared"
+      "Assignee": "Videosquared"
     }
   },
   {
     "date": "31-01",
-    "project": "TEMPLATE",
+    "project": "TEMPLATE-PROJECT",
     "summary": "something",
     "description": "Some desc",
     "custom-fields": {
-      "assignee": "Videosquared"
+      "Assignee": "Videosquared"
     }
   },
   {
     "date": "weekly",
     "date-week-day`": 3,
-    "project": "TEMPLATE",
+    "project": "TEMPLATE-PROJECT",
     "summary": "something",
     "description": "Some desc",
     "custom-fields": {
-      "assignee": "Videosquared"
+      "Assignee": "Videosquared"
     }
   }
 ]
