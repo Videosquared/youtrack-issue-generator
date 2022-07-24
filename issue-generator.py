@@ -21,17 +21,17 @@ import re
 
 def main():
     issue_generator = IssueGenerator()
-    issue_generator.send_get("api/admin/projects?fields=id,name,shortName")
+    issue_generator.run()
 
 
 class IssueGenerator:
 
     def __init__(self):
         self.debug = False
-        self.projects = self.get_projects()
         self.config_json = self.read_json("config.json")
         self.issues_json = self.read_json("issues.json")
         self.session = self.get_session()
+        self.projects = self.get_projects()
         self.logger = Logger()
 
     def run(self):
@@ -39,7 +39,7 @@ class IssueGenerator:
             if issue["project"] != "TEMPLATE-PROJECT" and self.check_date(issue):
                 if issue["project"] in self.projects.keys():
                     data = self.create_issue(issue)
-                    self.send_post("/api/issues", data)
+                    self.send_post("api/issues", data)
                 else:
                     # log that the project iD is incorrect
                     pass
@@ -69,7 +69,9 @@ class IssueGenerator:
 
     def send_get(self, url):
         response = self.session.get(self.config_json["youtrack-api-url"] + url)
-
+        # print(self.config_json["youtrack-api-url"] + url)
+        # print(self.session.headers)
+        # print(response.text)
         if response.status_code == 200:
             return json.loads(response.content)
         else:
@@ -93,7 +95,7 @@ class IssueGenerator:
         return session
 
     def get_projects(self):
-        json_response = self.send_get("admin/projects?fields=id,name,shortName")
+        json_response = self.send_get("api/admin/projects?fields=id,name,shortName")
 
         if json_response == 1:
             self.logger.clean_up()
@@ -107,11 +109,19 @@ class IssueGenerator:
         return projects
 
     def get_custom_fields(self, project):
-        url = "/api/issues?fields=idReadable,id,project%28id,name%29,summary" \
-              ",description,customFields%28name,$type,value%28name,login%29%29&query=in:{}&$top=1'".format(project)
+        url = "api/issues?fields=idReadable,id,project%28id,name%29,summary" \
+              ",description,customFields%28name,$type,value%28name,login%29%29&query=in:{}&$top=1".format(project)
+
+        # print(url)
 
         json_response = self.send_get(url)
+        if json_response == 1:
+            self.logger.clean_up()
+            print("ERROR: Unable to retrieve list of projects.")
+            exit(1)
 
+
+        # print(json_response)
         return json_response[0]["customFields"]
 
     @staticmethod
