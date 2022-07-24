@@ -26,7 +26,8 @@ This is a python script designed to create issues on Jetbrains YouTrack on a sch
    Please note, `TEMPLATE-PROJECT` is a reserved value and no issues will be generated if that is set in the `project` field. 
    4. `summary` - This field sets the summary field of the issue on YouTrack.
    5. `description` - This field sets the description field of the issue on YouTrack.
-   6. `custom-fields` - (OPTIONAL) This field sets the values of custom fields you have for the project on YouTrack. This will be project specific, please see first template issue in `issues.json` to see how it is structured.
+   6. `custom-fields` - (OPTIONAL) This field sets the values of custom fields you have for the project on YouTrack. This will be project specific, see first template issue in `issues.json` to see how it is structured. 
+   (**ENSURE ALL** custom field names **AND** values are correct to what it is on YouTrack otherwise the issue will **NOT** be generated)
 4. Open `/etc/crontab` and add the following:
    1. `0 6 * * * username python /path/to/issue-generator.py`
    This will ensure the script to run at 6am every day, you can update it to run at a time of your choice.
