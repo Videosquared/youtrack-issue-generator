@@ -1,6 +1,6 @@
 {
   "youtrack-token": "very-secret-token",
-  "youtrack-api-url": "https://example.myjetbrains.com/youtrack/api/",
+  "youtrack-api-url": "https://example.myjetbrains.com/youtrack/",
   "smtp-server": "smtp.example.com",
   "smtp-server-port": 465,
   "smtp-username": "very-secret-username",
