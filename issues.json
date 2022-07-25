@@ -53,26 +53,5 @@
     "custom-fields": {
       "Assignee": "Videosquared"
     }
-  },
-  {
-    "date": "25-07-2022",
-    "project": "YIG",
-    "summary": "API Test Issue",
-    "description": "Gibberish",
-    "custom-fields": {
-      "Assignee": "Videosquared",
-      "Priority": "NONO"
-    }
-  },
-  {
-    "date": "25-07-2022",
-    "project": "YIG",
-    "summary": "API Test Issue 2",
-    "description": "Gibberish",
-    "custom-fields": {
-      "Priority": "Critical",
-      "Assignee": "Videosquared",
-      "Type": "NONO"
-    }
   }
 ]
