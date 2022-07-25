@@ -7,11 +7,6 @@ import datetime
 import re
 
 
-def main():
-    issue_generator = IssueGenerator()
-    issue_generator.run()
-
-
 class IssueGenerator:
 
     def __init__(self):
@@ -286,4 +281,5 @@ class Emailer:
 
 # https://realpython.com/python-send-email/
 if __name__ == "__main__":
-    main()
+    issue_generator = IssueGenerator()
+    issue_generator.run()
