@@ -1,22 +1,10 @@
 import calendar
 import requests
-import sys
 import json
 import smtplib
 import ssl
 import datetime
 import re
-
-
-# https://www.jetbrains.com/help/youtrack/devportal/api-howto-create-issue-with-fields.html#step-by-step
-# https://www.nylas.com/blog/use-python-requests-module-rest-apis/
-# https://requests.readthedocs.io/en/latest/user/advanced/
-
-
-# https://stackoverflow.com/questions/62985961/how-to-use-requests-session-so-that-headers-are-presevred-and-reused-in-subseque
-
-# https://support.hostinger.com/en/articles/1575756-how-to-get-email-account-configuration-details-for-hostinger-email
-# https://realpython.com/python-send-email/
 
 
 def main():
@@ -27,22 +15,36 @@ def main():
 class IssueGenerator:
 
     def __init__(self):
-        self.debug = False
-        self.config_json = self.read_json("config.json")
-        self.issues_json = self.read_json("issues.json")
+        self.logger = Logger()
+        self.config_json = self.read_json("config.json", self.logger)
+        self.issues_json = self.read_json("issues.json", self.logger)
         self.session = self.get_session()
         self.projects = self.get_projects()
-        self.logger = Logger()
+        self.emailer = Emailer(self.logger)
 
     def run(self):
         for issue in self.issues_json:
             if issue["project"] != "TEMPLATE-PROJECT" and self.check_date(issue):
                 if issue["project"] in self.projects.keys():
+                    self.logger.log("INFO", "Creating issue {} {}...".format(issue["project"], issue["summary"]))
                     data = self.create_issue(issue)
-                    self.send_post("api/issues", data)
+                    response = self.send_post("api/issues", data)
+
+                    if response.status_code == 200:
+                        self.logger.log_created_issue(issue)
+                    else:
+                        self.logger.log_error_issue(issue, "Ensure the fields are correct (including custom field "
+                                                           "names and values) for this issue/project are correct.")
+
                 else:
-                    # log that the project iD is incorrect
-                    pass
+                    self.logger.log_error_issue(issue, "The project provided for the issue is not valid. Please ensure "
+                                                       "the user has access to the project and that the "
+                                                       "project name is correct.")
+            else:
+                self.logger.log_skipped_issue(issue)
+
+        self.logger.clean_up()
+        self.emailer.mail_logs()
 
     def create_issue(self, issue):
         data = {}
@@ -51,36 +53,42 @@ class IssueGenerator:
         data.update({"description": issue["description"]})
 
         if "custom-fields" in issue.keys():
-            data.update({"customFields": []})
+            self.logger.log("INFO", "Issue has custom field(s).")
+
             custom_fields_response = self.get_custom_fields(issue["project"])
-            for field_name in issue["custom-fields"].keys():
-                for field in custom_fields_response:
-                    if field_name == field["name"]:
-                        if field_name == "Assignee":
-                            data.get("customFields").append({"name": field["name"],
-                                                             "$type": field["$type"],
-                                                             "value": {"login": issue["custom-fields"]["Assignee"]}})
-                        else:
-                            data.get("customFields").append({"name": field["name"],
-                                                             "$type": field["$type"],
-                                                             "value": {"name": issue["custom-fields"][field_name]}})
+            if custom_fields_response != 1:
+                data.update({"customFields": []})
+                for field_name in issue["custom-fields"].keys():
+                    for field in custom_fields_response:
+                        if field_name == field["name"]:
+                            if field_name == "Assignee":
+                                data.get("customFields") \
+                                    .append({"name": field["name"],
+                                             "$type": field["$type"],
+                                             "value": {"login": issue["custom-fields"]["Assignee"]}})
+                            else:
+                                data.get("customFields") \
+                                    .append({"name": field["name"],
+                                             "$type": field["$type"],
+                                             "value": {"name": issue["custom-fields"][field_name]}})
 
         return data
 
     def send_get(self, url):
+        self.logger.log("INFO", "Sending GET request to {}".format(self.config_json["youtrack-api-url"] + url))
         response = self.session.get(self.config_json["youtrack-api-url"] + url)
-        # print(self.config_json["youtrack-api-url"] + url)
-        # print(self.session.headers)
-        # print(response.text)
         if response.status_code == 200:
             return json.loads(response.content)
         else:
-            # Log shit
+            self.logger.log("ERROR", "Invalid HTTP status code received from server. Check provided youtrack URL/token"
+                                     " and this computer/server is able to access your YouTrack "
+                                     "instance (firewalled?).")
             return 1
 
     def send_post(self, url, data):
-        response = self.session.post(self.config_json["youtrack-api-url"] + url, json=data)
-        # log response
+        self.logger.log("INFO", "Sending POST request to {} with {}".format(self.config_json["youtrack-api-url"] +
+                                                                            url, data))
+        return self.session.post(self.config_json["youtrack-api-url"] + url, json=data)
 
     def get_session(self):
         session = requests.Session()
@@ -95,9 +103,12 @@ class IssueGenerator:
         return session
 
     def get_projects(self):
+        self.logger.log("INFO", "Getting project IDs...")
         json_response = self.send_get("api/admin/projects?fields=id,name,shortName")
 
         if json_response == 1:
+            self.logger.log("ERROR", "Unable to retrieve list of projects from YouTrack instance. Ensure credentials "
+                                     "are correct and this computer/server is able to talk to the YouTrack instance.")
             self.logger.clean_up()
             print("ERROR: Unable to retrieve list of projects.")
             exit(1)
@@ -112,16 +123,12 @@ class IssueGenerator:
         url = "api/issues?fields=idReadable,id,project%28id,name%29,summary" \
               ",description,customFields%28name,$type,value%28name,login%29%29&query=in:{}&$top=1".format(project)
 
-        # print(url)
-
+        self.logger.log("INFO", "Getting custom field(s) data...")
         json_response = self.send_get(url)
         if json_response == 1:
-            self.logger.clean_up()
-            print("ERROR: Unable to retrieve list of projects.")
-            exit(1)
+            self.logger.log("ERROR", "Unable to retrieve custom field(s) data. Will not set custom field(s) values.")
+            return 1
 
-
-        # print(json_response)
         return json_response[0]["customFields"]
 
     @staticmethod
@@ -160,11 +167,17 @@ class IssueGenerator:
             return False
 
     @staticmethod
-    def read_json(json_file):
-        with open(json_file, "r") as file:
-            content = file.read()
-            json_data = json.loads(content)
-        return json_data
+    def read_json(json_file, logger):
+        try:
+            with open(json_file, "r") as file:
+                content = file.read()
+                json_data = json.loads(content)
+                return json_data
+        except FileNotFoundError:
+            logger.log("INFO", "{} file not found.".format(json_file))
+            logger.clean_up()
+            print("ERROR: {} file not found.".format(json_file))
+            exit(1)
 
     @staticmethod
     def find_patch_tuesday():
@@ -192,30 +205,83 @@ class Logger:
         self.log_file.truncate()
         self.end_time = 0
         self.issues = []
-        self.emailer = Emailer()
+        # self.emailer = Emailer(self)
 
-    def set_end_time(self):
-        self.end_time = datetime.datetime.now().strftime("%H:%M:%S %d-%m-%Y")
+        self.log("INFO", "Starting YouTrack Issue Generator....")
+
+    def log(self, log_type, log_string):
+        self.log_file.write("{} [{}]: {}\n".format(datetime.datetime.now().strftime("%H:%M:%S %d-%m-%Y"), log_type,
+                                                   log_string))
+
+    def log_skipped_issue(self, issue):
+        if issue["project"] != "TEMPLATE-PROJECT":
+            self.log_file.write("{} [SKIPPED ISSUE]: {} - {}\n".format(datetime.datetime.now().
+                                                                       strftime("%H:%M:%S %d-%m-%Y"), issue["project"],
+                                                                       issue["summary"]))
+            self.issues.append((issue, "SKIPPED"))
+
+    def log_created_issue(self, issue):
+        self.log_file.write(
+            "{} [CREATED ISSUE]: {} - {}\n".format(datetime.datetime.now().strftime("%H:%M:%S %d-%m-%Y"),
+                                                   issue["project"], issue["summary"]))
+        self.issues.append((issue, "CREATED"))
+
+    def log_error_issue(self, issue, msg):
+        self.log_file.write(
+            "{} [ERROR ISSUE]: {} - {} [{}]\n".format(datetime.datetime.now().strftime("%H:%M:%S %d-%m-%Y"),
+                                                      issue["project"], issue["summary"], msg))
+        self.issues.append((issue, "ERROR"))
 
     def clean_up(self):
-        pass
+        self.log("INFO", "Stopping YouTrack Issue Generator")
+
+        self.log_file.close()
+        self.log_file = open("latest-logs.log", "r+")
+
+        logs = self.log_file.read()
+        self.log_file.seek(0)
+
+        self.log_file.write("##### YouTrack Issue Generator Summary #####\n\n")
+        if len(self.issues) == 0:
+            self.log_file.write("No issues were provided or an error occurred.\n")
+        else:
+            for item in self.issues:
+                self.log_file.write("{}: {} - {}\n".format(item[1], item[0]["project"],
+                                                           item[0]["summary"]))
+
+        self.log_file.write("\nIssue generation started at:\n")
+        self.log_file.write(self.start_time + "\n")
+
+        self.log_file.write("Issue generation finished at:\n")
+        self.log_file.write(datetime.datetime.now().strftime("%H:%M:%S %d-%m-%Y") + "\n\n")
+
+        self.log_file.write(logs)
+
+        self.log_file.close()
 
 
 class Emailer:
 
-    def __init__(self):
-        self.config_json = self.read_json("config.json")
+    def __init__(self, logger):
+        self.logger = logger
+        self.config_json = IssueGenerator.read_json("config.json", self.logger)
 
     # https://realpython.com/python-send-email/
     def mail_logs(self):
-        pass
 
-    @staticmethod
-    def read_json(json_file):
-        with open(json_file, "r") as file:
-            content = file.read()
-            json_data = json.loads(content)
-        return json_data
+        log_file = open("latest-logs.log", "r")
+
+        context = ssl.create_default_context()
+        message = "Subject: YouTrack Issue Generator Report {}\nFrom: {}\nTo: {}\n" \
+            .format(datetime.datetime.now().strftime("%d-%m-%Y"), self.config_json["smtp-sender-email"],
+                    self.config_json["smtp-receiver-email"])
+        message = message + log_file.read()
+
+        with smtplib.SMTP_SSL(self.config_json["smtp-server"], self.config_json["smtp-server-port"],
+                              context=context) as smtp_server:
+            smtp_server.login(self.config_json["smtp-username"], self.config_json["smtp-password"])
+            smtp_server.sendmail(self.config_json["smtp-sender-email"], self.config_json["smtp-receiver-email"],
+                                 message)
 
 
 # https://realpython.com/python-send-email/
