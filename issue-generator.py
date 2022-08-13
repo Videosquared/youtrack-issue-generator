@@ -5,16 +5,20 @@ import smtplib
 import ssl
 import datetime
 import re
+import sys
+import os
 
 
 # The main class responsible for the main calculations and the generation of issues.
 class IssueGenerator:
 
     def __init__(self):
-        self.logger = Logger()
+        file_path = os.path.dirname(os.path.realpath(__file__))
+
+        self.logger = Logger(file_path)
         self.emailer = Emailer(self.logger)
-        self.config_json = self.read_json("config.json", self.logger, self.emailer)
-        self.issues_json = self.read_json("issues.json", self.logger, self.emailer)
+        self.config_json = self.read_json(file_path + "/" + "config.json", self.logger, self.emailer)
+        self.issues_json = self.read_json(file_path + "/" + "issues.json", self.logger, self.emailer)
         self.session = self.get_session()
         self.projects = self.get_projects()
 
@@ -240,9 +244,9 @@ class IssueGenerator:
 # The class responsible for logging data during the creation of issues.
 class Logger:
 
-    def __init__(self):
+    def __init__(self, file_path):
         self.start_time = datetime.datetime.now().strftime("%H:%M:%S %d-%m-%Y")
-        self.log_file = open("latest-logs.log", "w")
+        self.log_file = open(file_path + "/" + "latest-logs.log", "w")
         self.log_file.truncate()
         self.end_time = 0
         self.issues = []  # This contains a tuple of the issue and the result for that issue. i.e. (issue, "CREATED").
