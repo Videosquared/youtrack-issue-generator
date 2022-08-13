@@ -247,6 +247,7 @@ class Logger:
     def __init__(self, file_path):
         self.start_time = datetime.datetime.now().strftime("%H:%M:%S %d-%m-%Y")
         self.log_file = open(file_path + "/" + "latest-logs.log", "w")
+        self.file_path = file_path
         self.log_file.truncate()
         self.end_time = 0
         self.issues = []  # This contains a tuple of the issue and the result for that issue. i.e. (issue, "CREATED").
@@ -291,7 +292,7 @@ class Logger:
         self.log_file.close()
 
         # Open the file for read and write.
-        self.log_file = open("latest-logs.log", "r+")
+        self.log_file = open(self.file_path + "/" + "latest-logs.log", "r+")
         logs = self.log_file.read()  # Read all the current logs.
         self.log_file.seek(0)  # Go to start of file.
 
