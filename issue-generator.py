@@ -16,7 +16,7 @@ class IssueGenerator:
         file_path = os.path.dirname(os.path.realpath(__file__))
 
         self.logger = Logger(file_path)
-        self.emailer = Emailer(self.logger)
+        self.emailer = Emailer(self.logger, file_path)
         self.config_json = self.read_json(file_path + "/" + "config.json", self.logger, self.emailer)
         self.issues_json = self.read_json(file_path + "/" + "issues.json", self.logger, self.emailer)
         self.session = self.get_session()
@@ -318,13 +318,14 @@ class Logger:
 # The class responsible for emailing the completed logs to the recipient.
 class Emailer:
 
-    def __init__(self, logger):
+    def __init__(self, logger, file_path):
         self.config_json = IssueGenerator.read_json("config.json", logger, self)
+        self.file_path = file_path
 
     # This will open the read the log file, create an email message. Then create an SSL
     # connection to the SMTP server and send the email.
     def mail_logs(self):
-        log_file = open("latest-logs.log", "r")
+        log_file = open(self.file_path + "/" + "latest-logs.log", "r")
 
         # Create the email contents in the format of:
         # Subject: <subject>
