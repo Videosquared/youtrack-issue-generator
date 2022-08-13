@@ -319,9 +319,10 @@ class Logger:
 # The class responsible for emailing the completed logs to the recipient.
 class Emailer:
 
-    def __init__(self, logger, file_path):
-        self.config_json = IssueGenerator.read_json("config.json", logger, self)
-        self.file_path = file_path
+    def __init__(self, logger, orig_file_path):
+        self.file_path = orig_file_path
+        self.config_json = IssueGenerator.read_json(self.file_path + "/" + "config.json", logger, self)
+
 
     # This will open the read the log file, create an email message. Then create an SSL
     # connection to the SMTP server and send the email.
@@ -347,6 +348,8 @@ class Emailer:
             smtp_server.login(self.config_json["smtp-username"], self.config_json["smtp-password"])
             smtp_server.sendmail(self.config_json["smtp-sender-email"], self.config_json["smtp-receiver-email"],
                                  message)
+
+        log_file.close()
 
 
 # Allows the program to run by itself.
