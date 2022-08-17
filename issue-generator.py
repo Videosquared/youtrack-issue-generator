@@ -5,7 +5,6 @@ import smtplib
 import ssl
 import datetime
 import re
-import sys
 import os
 
 
