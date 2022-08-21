@@ -1,5 +1,5 @@
 # YouTrack Issue Generator
-This is a python script designed to create issues on Jetbrains YouTrack on based on the dates set in the configuration. It is designed to be run once a day, and it will generate the corresponding issues for that day. For example, it can generate an issue on every patch tuesday, saturday after patch tuesday, specific date etc... see installation guide below for more details.
+This is a python script designed to create issues on Jetbrains YouTrack based on the dates set in the configuration. It is designed to be run once a day, and it will generate the corresponding issues for that day. For example, it can generate an issue on every patch tuesday, saturday after patch tuesday, specific date etc... see installation guide below for more details.
 
 NOTE: Many values in the installation guide below **MUST** be entered as is (correctly, case-sensitive) or your issue will not be parsed correctly and not generated.
 
