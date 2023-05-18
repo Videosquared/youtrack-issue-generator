@@ -1,4 +1,5 @@
 import calendar
+import configparser
 import requests
 import json
 import smtplib
@@ -8,15 +9,24 @@ import re
 import os
 
 
+# Convenient place to put this, so we can modify it if we need to.
+def main():
+    generator = IssueGenerator()
+    generator.run()
+
+
 # The main class responsible for the main calculations and the generation of issues.
 class IssueGenerator:
 
     def __init__(self):
         file_path = os.path.dirname(os.path.realpath(__file__))
 
+        self.config = configparser.ConfigParser()
+        self.config.read_file(open(file_path + "/" + "config.ini", "r"))
+
         self.logger = Logger(file_path)
-        self.emailer = Emailer(self.logger, file_path)
-        self.config_json = self.read_json(file_path + "/" + "config.json", self.logger, self.emailer)
+        self.emailer = Emailer(self.logger, file_path, self.config)
+
         self.issues_json = self.read_json(file_path + "/" + "issues.json", self.logger, self.emailer)
         self.session = self.get_session()
         self.projects = self.get_projects()
@@ -95,8 +105,8 @@ class IssueGenerator:
     # This will send a GET request to the given URL. It will check if the response is valid (status code 200)
     # otherwise return 1 to indicate the response is invalid.
     def send_get(self, url):
-        self.logger.log("INFO", "Sending GET request to {}".format(self.config_json["youtrack-api-url"] + url))
-        response = self.session.get(self.config_json["youtrack-api-url"] + url)
+        self.logger.log("INFO", "Sending GET request to {}".format(self.config.get("youtrack", "url") + url))
+        response = self.session.get(self.config.get("youtrack", "url") + url)
 
         # Checking if the response is valid.
         if response.status_code == 200:
@@ -109,9 +119,9 @@ class IssueGenerator:
 
     # This will send a POST request to the given URL with the provided data.
     def send_post(self, url, data):
-        self.logger.log("INFO", "Sending POST request to {} with {}".format(self.config_json["youtrack-api-url"] +
+        self.logger.log("INFO", "Sending POST request to {} with {}".format(self.config.get("youtrack", "url") +
                                                                             url, data))
-        return self.session.post(self.config_json["youtrack-api-url"] + url, json=data)
+        return self.session.post(self.config.get("youtrack", "url") + url, json=data)
 
     # This will create a session object and set the default headers required for the YouTrack API.
     def get_session(self):
@@ -120,7 +130,7 @@ class IssueGenerator:
         # Headers required for the YouTrack API.
         base_headers = {
             "Accept": "application/json",
-            "Authorization": "Bearer " + self.config_json["youtrack-token"],
+            "Authorization": "Bearer " + self.config.get("youtrack", "token"),
             "Content-Type": "application/json"
         }
 
@@ -318,10 +328,9 @@ class Logger:
 # The class responsible for emailing the completed logs to the recipient.
 class Emailer:
 
-    def __init__(self, logger, orig_file_path):
+    def __init__(self, logger, orig_file_path, config):
         self.file_path = orig_file_path
-        self.config_json = IssueGenerator.read_json(self.file_path + "/" + "config.json", logger, self)
-
+        self.config = config
 
     # This will open the read the log file, create an email message. Then create an SSL
     # connection to the SMTP server and send the email.
@@ -336,16 +345,16 @@ class Emailer:
         # <content>
 
         message = "Subject: YouTrack Issue Generator Report {}\nFrom: {}\nTo: {}\n\n" \
-            .format(datetime.datetime.now().strftime("%d-%m-%Y"), self.config_json["smtp-sender-email"],
-                    self.config_json["smtp-receiver-email"])
+            .format(datetime.datetime.now().strftime("%d-%m-%Y"), self.config.get("smtp", "sender-email"),
+                    self.config.get("smtp", "recipient-email"))
         message = message + log_file.read()
 
         # Creating an SSL connection to the SMTP server and sending the email.
         context = ssl.create_default_context()
-        with smtplib.SMTP_SSL(self.config_json["smtp-server"], self.config_json["smtp-server-port"],
+        with smtplib.SMTP_SSL(self.config.get("smtp", "server"), self.config.get("smtp", "port"),
                               context=context) as smtp_server:
-            smtp_server.login(self.config_json["smtp-username"], self.config_json["smtp-password"])
-            smtp_server.sendmail(self.config_json["smtp-sender-email"], self.config_json["smtp-receiver-email"],
+            smtp_server.login(self.config.get("smtp", "username"), self.config.get("smtp", "password"))
+            smtp_server.sendmail(self.config.get("smtp", "sender-email"), self.config.get("smtp", "recipient-email"),
                                  message)
 
         log_file.close()
@@ -353,5 +362,4 @@ class Emailer:
 
 # Allows the program to run by itself.
 if __name__ == "__main__":
-    issue_generator = IssueGenerator()
-    issue_generator.run()
+    main()
