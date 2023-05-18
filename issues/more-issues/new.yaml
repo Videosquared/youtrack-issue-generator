@@ -1,0 +1,7 @@
+date: daily
+project: PRJ
+summary: TEST-02
+description: 'Encase the description inside single quotes'
+custom-fields:
+  Assignee: User
+  Type: Bug

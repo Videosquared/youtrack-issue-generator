@@ -1,0 +1,7 @@
+date: daily
+project: PRJ
+summary: Test-01
+description: "Some really long \n multi lined description"
+custom-fields:
+  Assignee: User
+  Type: Feature
