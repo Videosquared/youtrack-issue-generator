@@ -44,7 +44,7 @@ NOTE: Many values in the installation guide below **MUST** be entered as is (cor
 When you are developing please ensure no credentials are committed to GitHub, the file in question is `config.json`. To prevent this, you can run the following command:
 
 ```bash
-git git update-index --assume-unchanged config.ini
+git update-index --assume-unchanged config.ini
 ```
 
 If you have updated the file, remove credentials and run:
