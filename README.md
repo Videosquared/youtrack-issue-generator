@@ -40,3 +40,14 @@ NOTE: Many values in the installation guide below **MUST** be entered as is (cor
       3. Ensure `python` is python 3.x and not 2.x.
          1. You can check by running `python --version`. If it shows as 2.x, you can run `sudo apt install python-is-python3` if you have administrator privileges. Alternatively, you can update crontab from `python` to `python3`.
 
+# Development notes
+When you are developing please ensure no credentials are committed to GitHub, the file in question is `config.json`. To prevent this, you can run the following command:
+
+```bash
+git git update-index --assume-unchanged config.json
+```
+
+If you have updated the file, remove credentials and run:
+```bash
+git update-index --no-assume-unchanged config.json
+```
